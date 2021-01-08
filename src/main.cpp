@@ -10,10 +10,29 @@
 #define LED PB0        // Test Counter LED
 #define IR_Sensor PD2  // PD2=INT0
 #define MaxTime 500
+#define MAX_CCW 1.0 // Duty-cycle for MAX CCW speed
+#define MAX_CW 2.0  // Dutry-cycle for MAX CW speed
+#define ZERO_W 1.5  // Duty-cycle for STOP Disk
 
 int16_t time_p; // PWM F=50, therefore we need 500 interrupts to complete 10s
 uint8_t state;
+float dc; // Duty-cycle
 bool inv;
+
+void speed(int8_t speed) {
+    if (speed == 0) {
+        dc = ZERO_W;
+    }
+    if (speed > 0) {
+        dc = ZERO_W - abs((speed / 100) * (MAX_CCW - ZERO_W));
+    } else {
+        dc = ZERO_W + abs((speed / 100) * (MAX_CW - ZERO_W));
+    }
+
+    dc = dc / 1000; // Convert DC to ms
+
+    OCR1A = dc / (16000000 / 8); // Disered OCR1A
+}
 
 /*********************************************
  * Timer 1 Fast PWM mode
@@ -97,13 +116,16 @@ int main(void) {
 
         switch (state) {
         case 0:
-            OCR1A = 3000; // Pulse with 1.5ms (0 degrees / STOP)
+            speed(0); // STOP
+            // OCR1A = 3000; // Pulse with 1.5ms (0 degrees / STOP)
             break;
         case 1:
-            OCR1A = 2000; // Pulse with 1ms (90 degrees / CCW max speed)
+            speed(50);
+            // OCR1A = 2000; // Pulse with 1ms (90 degrees / CCW max speed)
             break;
         case 2:
-            OCR1A = 4000; // Pulse with 1ms (-90 degrees / CW max speed)
+            speed(-50);
+            // OCR1A = 4000; // Pulse with 1ms (-90 degrees / CW max speed)
             break;
         }
     }
