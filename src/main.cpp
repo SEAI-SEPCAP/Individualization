@@ -13,25 +13,27 @@
 #define MAX_CCW 1.0 // Duty-cycle for MAX CCW speed
 #define MAX_CW 2.0  // Dutry-cycle for MAX CW speed
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
+#define P_FCLK 2000 // (16M/1000)/8
 
 int16_t time_p; // PWM F=50, therefore we need 500 interrupts to complete 10s
 uint8_t state;
-float dc; // Duty-cycle
+int dc; // Duty-cycle
 bool inv;
 
-void speed(int8_t speed) {
+void speed(int speed) {
     if (speed == 0) {
         dc = ZERO_W;
-    }
-    if (speed > 0) {
-        dc = ZERO_W - abs((speed / 100) * (MAX_CCW - ZERO_W));
     } else {
-        dc = ZERO_W + abs((speed / 100) * (MAX_CW - ZERO_W));
+        if (speed > 0) {
+            dc = (ZERO_W - abs((speed / 100) * (MAX_CCW - ZERO_W)));
+        } else {
+            dc = (ZERO_W + abs((speed / 100) * (MAX_CW - ZERO_W)));
+        }
     }
 
-    dc = dc / 1000; // Convert DC to ms
+    OCR1A = dc * P_FCLK;
 
-    OCR1A = dc / (16000000 / 8); // Disered OCR1A
+    return;
 }
 
 /*********************************************
@@ -41,10 +43,10 @@ void timer1_init(void) {
     TCNT1 = 0;     // Set timer1 count zero
     ICR1 = PWMTOP; // TOP count for timer1 -> FPWM = FOSC/(N*(1+TOP)) with
                    // FPWM=50 and N=8
-    TCCR1A = _BV(COM1A1) | _BV(0 << COM1A0); // Non inverter PWM
-    TCCR1A |= _BV(WGM11) | _BV(0 << WGM10);  // Fast PWM: TOP: ICR1
-    TCCR1B = _BV(WGM13) | _BV(WGM12);        // Fast PWM: TOP: ICR1
-    TCCR1B |= _BV(0 << CS12) | _BV(CS11) | _BV(0 << CS10); // Preesc = 8
+    TCCR1A = _BV(COM1A1) | (0 << COM1A0);            // Non inverter PWM
+    TCCR1A |= _BV(WGM11) | (0 << WGM10);             // Fast PWM: TOP: ICR1
+    TCCR1B = _BV(WGM13) | _BV(WGM12);                // Fast PWM: TOP: ICR1
+    TCCR1B |= (0 << CS12) | _BV(CS11) | (0 << CS10); // Preesc = 8
     TIMSK1 |= _BV(TOIE1); // Overflow interrupt enable
 }
 
@@ -82,6 +84,7 @@ int main(void) {
     hw_init_interrupt();
     start_timer1(MaxTime); // Reset Timer
     sei();                 // Enable global int
+
     state = 0;
     inv = false;
 
@@ -89,9 +92,11 @@ int main(void) {
         switch (state) {
         case 0:
             if (false == inv) {
+                _delay_ms(500);
                 state = 1;             // Normal Rotation
                 start_timer1(MaxTime); // Reset Timer
             } else {
+                _delay_ms(500);
                 state = 2;             // Inverted Rotation
                 start_timer1(MaxTime); // Reset Timer
             }
@@ -101,7 +106,6 @@ int main(void) {
             if (0 == time_p) {
                 state = 0;
                 inv = true; // Set Inverted rotation
-                _delay_ms(1000);
             }
             break;
 
@@ -109,7 +113,6 @@ int main(void) {
             if (0 == time_p) {
                 state = 0;
                 inv = false; // Set Normal Rotation
-                _delay_ms(1000);
             }
             break;
         }
@@ -120,12 +123,12 @@ int main(void) {
             // OCR1A = 3000; // Pulse with 1.5ms (0 degrees / STOP)
             break;
         case 1:
-            speed(50);
-            // OCR1A = 2000; // Pulse with 1ms (90 degrees / CCW max speed)
+            speed(100);
+            // OCR1A = 2800; // Pulse with 1ms (90 degrees / CCW max speed)
             break;
         case 2:
-            speed(-50);
-            // OCR1A = 4000; // Pulse with 1ms (-90 degrees / CW max speed)
+            // speed(0);
+            OCR1A = 4000; // Pulse with 1ms (-90 degrees / CW max speed)
             break;
         }
     }
