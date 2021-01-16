@@ -13,6 +13,7 @@
 
 #define Motor_indv PINL3 // Individualization Servo Output Port - PORT 46
 #define IR_Sensor PIND0  // INT0 - IR Sensor Interrupt
+#define EM_BUTTOM PIND1  // INT1 - EM Bottom Interrupt
 
 #define Time_Invert 500
 #define MAX_CCW 1.0 // Duty-cycle for MAX CCW speed
@@ -29,7 +30,7 @@ uint8_t aux;
 
 uint8_t selected_servo = 1;
 
-void speed(double speed) {
+void disc_speed_rot(double speed) {
     if (speed <= 0) {
         OCR5A = (ZERO_W - abs((speed / 100) * (MAX_CCW - ZERO_W))) * P_FCLK;
     } else {
@@ -43,6 +44,7 @@ void speed(double speed) {
  *********************************************/
 void initTimers(void) {
     initDistTimers();
+
     TCNT5 = 0;     // Set timer5 count zero
     ICR5 = PWMTOP; // TOP count for timer5 -> FPWM = FOSC/(N*(1+TOP)) with
                    // FPWM=50 and N=8
@@ -66,6 +68,16 @@ void IR_interrupt(void) {
     EICRA |= _BV(ISC01);
     /* Enable INT0 */
     EIMSK |= _BV(INT0);
+}
+
+void EM_interrupt(void) {
+    /* Set Interrupt pins as input and activate internal pull-ups */
+    DDRD &= (0 << EM_BUTTOM);
+    PORTD |= _BV(EM_BUTTOM);
+    /* Interrupt request at falling edge for INT1 */
+    EICRA |= _BV(ISC11);
+    /* Enable INT0 */
+    EIMSK |= _BV(INT1);
 }
 
 /*********************************************
@@ -107,15 +119,15 @@ void indv_control(void) {
 
     switch (state) {
     case 0:
-        speed(0); // STOP
+        disc_speed_rot(0); // STOP
         // OCR1A = 3000; // Pulse with 1.5ms (0 degrees / STOP)
         break;
     case 1:
-        speed(70);
+        disc_speed_rot(70);
         // OCR1A = 2800; // Pulse with 1ms (90 degrees / CCW max speed)
         break;
     case 2:
-        speed(-70);
+        disc_speed_rot(-70);
         // OCR1A = 4000; // Pulse with 1ms (-90 degrees / CW max speed)
         break;
     }
@@ -188,4 +200,9 @@ int main(void) {
 // Sensor interrupt
 ISR(INT0_vect) {
     setTimer(inverterTimer, Time_Invert); // Reset the timer
+}
+
+// Emergency interrupt
+ISR(INT1_vect) {
+    // TODO
 }
