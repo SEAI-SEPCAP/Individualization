@@ -11,9 +11,6 @@
 
 #define FCPU 16000000ul
 
-#define T1TOP 625    // CTC mode OCR1A=625
-#define PWMTOP 39999 // TIMER TOP for PRESC=8
-
 #define Motor_indv PINL3 // Individualization Servo Output Port - PORT 46
 #define IR_Sensor PIND0  // INT0 - IR Sensor Interrupt
 
@@ -45,32 +42,7 @@ void speed(double speed) {
  * Timer 1 with interrupt
  *********************************************/
 void initTimers(void) {
-    TCNT1 = 0;     // Set timer1 count zero
-    ICR1 = PWMTOP; // TOP count for timer1 -> FPWM = FOSC/(N*(1+TOP)) with
-                   // FPWM=50 and N=8
-    TCCR1A = _BV(COM1A1) | _BV(COM1B1) | (0 << COM1A0); // Non inverter PWM
-    TCCR1A |= _BV(WGM11) | (0 << WGM10);                // Fast PWM: TOP: ICR1
-    TCCR1B = _BV(WGM13) | _BV(WGM12);                   // Fast PWM: TOP: ICR1
-    TCCR1B |= (0 << CS12) | _BV(CS11) | (0 << CS10);    // Preesc = 8
-
-    TCNT3 = 0;     // Set timer1 count zero
-    ICR3 = PWMTOP; // TOP count for timer1 -> FPWM = FOSC/(N*(1+TOP)) with
-                   // FPWM=50 and N=8
-    TCCR3A = _BV(COM3B1) | _BV(COM3C1) | _BV(COM3A1) |
-             (0 << COM3A0);                          // Non inverter PWM
-    TCCR3A |= _BV(WGM31) | (0 << WGM30);             // Fast PWM: TOP: ICR1
-    TCCR3B = _BV(WGM33) | _BV(WGM32);                // Fast PWM: TOP: ICR1
-    TCCR3B |= (0 << CS32) | _BV(CS31) | (0 << CS30); // Preesc = 8
-
-    TCNT4 = 0;     // Set timer1 count zero
-    ICR4 = PWMTOP; // TOP count for timer1 -> FPWM = FOSC/(N*(1+TOP)) with
-                   // FPWM=50 and N=8
-    TCCR4A = _BV(COM4B1) | _BV(COM4C1) | _BV(COM4A1) |
-             (0 << COM4A0);                          // Non inverter PWM
-    TCCR4A |= _BV(WGM41) | (0 << WGM40);             // Fast PWM: TOP: ICR1
-    TCCR4B = _BV(WGM43) | _BV(WGM42);                // Fast PWM: TOP: ICR1
-    TCCR4B |= (0 << CS42) | _BV(CS41) | (0 << CS40); // Preesc = 8
-
+    initDistTimers();
     TCNT5 = 0;     // Set timer5 count zero
     ICR5 = PWMTOP; // TOP count for timer5 -> FPWM = FOSC/(N*(1+TOP)) with
                    // FPWM=50 and N=8
@@ -101,20 +73,6 @@ void IR_interrupt(void) {
  *********************************************/
 void setup_indv(void) {
     DDRL |= _BV(Motor_indv); // Digital Pin 11, OCR1A
-}
-
-/*********************************************
- * Distribution SERVO ports
- *********************************************/
-void setup_dist(void) {
-    // SERVO as OUT
-    DDRE |= _BV(PINE4); // Digital Pin 2, OC3B
-    DDRE |= _BV(PINE5); // Digital Pin 3, OC3C
-    DDRB |= _BV(PINB6); // Digital Pin 12, OC1B
-    DDRE |= _BV(PINE3); // Digital Pin 5, OC3A
-    DDRH |= _BV(PINH3); // Digital Pin 6, OC4A
-    DDRH |= _BV(PINH4); // Digital Pin 7, OC4B
-    DDRH |= _BV(PINH5); // Digital Pin 8, OC4C
 }
 
 /*********************************************
@@ -195,15 +153,16 @@ void send_Data(uint8_t Data) {
 }
 
 void initialization(void) {
-    setup_dist();
-    setup_indv();
-
+    initDistPins();
     initTimers();
 
+    setup_indv();
     IR_interrupt();
-    // setup_uart();
 
+    // setup_uart();
     sei(); // Enable global int
+
+    resetServoPositions();
 
     setTimer(inverterTimer, MaxTime); // Reset Timer
 
