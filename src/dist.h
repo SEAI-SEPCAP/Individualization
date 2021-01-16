@@ -161,13 +161,13 @@ void initDistTimers() {
  *********************************************/
 void initDistPins(void) {
     // SERVO as OUT
-    DDRE |= _BV(PINE4); // Digital Pin 2, OC3B
-    DDRE |= _BV(PINE5); // Digital Pin 3, OC3C
-    DDRB |= _BV(PINB6); // Digital Pin 12, OC1B
-    DDRE |= _BV(PINE3); // Digital Pin 5, OC3A
-    DDRH |= _BV(PINH3); // Digital Pin 6, OC4A
-    DDRH |= _BV(PINH4); // Digital Pin 7, OC4B
-    DDRH |= _BV(PINH5); // Digital Pin 8, OC4C
+    DDRE |= _BV(PINE4); // Digital Pin 2, OC3B, Servo1 - PORT PWM2
+    DDRE |= _BV(PINE5); // Digital Pin 3, OC3C, Servo2 - PORT PWM3
+    DDRB |= _BV(PINB6); // Digital Pin 12, OC1B, Servo3 - PORT PWM12
+    DDRE |= _BV(PINE3); // Digital Pin 5, OC3A, Servo4 - PORT PWM5
+    DDRH |= _BV(PINH3); // Digital Pin 6, OC4A, Servo5 - PORT PWM6
+    DDRH |= _BV(PINH4); // Digital Pin 7, OC4B, Servo6 - PORT PWM7
+    DDRH |= _BV(PINH5); // Digital Pin 8, OC4C, Servo7 - PORT PWM8
 }
 
 void resetServoPositions() {
