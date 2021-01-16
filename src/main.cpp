@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <util/delay.h>
 
+#include "dist.h"
+#include "servoControl.h"
+#include "timer.h"
+
 #define FCPU 16000000ul
 
 #define T1TOP 625    // CTC mode OCR1A=625
@@ -19,32 +23,14 @@
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
 #define P_FCLK 2000 // (16M/1000)/8
 
-#define ZERO1 2800 // fechado
-#define ZERO2 2800
-#define ZERO3 2800
-#define ZERO4 2800
-#define ZERO5 3100
-#define ZERO6 3700
-#define ZERO7 3400
-
-#define MAX1 1500 // aberto
-#define MAX2 1600
-#define MAX3 1400
-#define MAX4 1700
-#define MAX5 1900
-#define MAX6 2700
-#define MAX7 1800
-
-#define MAX(index) (MAX##index)
-#define ZERO(index) (ZERO##index)
-
-int16_t time_p; // PWM F=50, therefore we need 500 interrupts to complete 10s
 uint8_t state;
 float dc; // Duty-cycle
 bool inv;
-uint8_t selected_servo = 0;
+
 uint8_t addr;
 uint8_t aux;
+
+uint8_t selected_servo = 1;
 
 void speed(double speed) {
     if (speed <= 0) {
@@ -58,7 +44,7 @@ void speed(double speed) {
  * Timer 1,2,3 Fast PWM mode
  * Timer 1 with interrupt
  *********************************************/
-void timers(void) {
+void initTimers(void) {
     TCNT1 = 0;     // Set timer1 count zero
     ICR1 = PWMTOP; // TOP count for timer1 -> FPWM = FOSC/(N*(1+TOP)) with
                    // FPWM=50 and N=8
@@ -99,7 +85,6 @@ void timers(void) {
  * Timer1 init
  * Timer to trigger the inversion of the disk rotation
  *********************************************/
-void start_timer5(int timer) { time_p = timer; }
 
 void IR_interrupt(void) {
     /* Set Interrupt pins as input and activate internal pull-ups */
@@ -139,23 +124,23 @@ void indv_control(void) {
     switch (state) {
     case 0:
         if (false == inv) {
-            state = 1;             // Normal Rotation
-            start_timer5(MaxTime); // Reset Timer
+            state = 1;                        // Normal Rotation
+            setTimer(inverterTimer, MaxTime); // Reset Timer
         } else {
-            state = 2;             // Inverted Rotation
-            start_timer5(MaxTime); // Reset Timer
+            state = 2;                        // Inverted Rotation
+            setTimer(inverterTimer, MaxTime); // Reset Timer
         }
         break;
 
     case 1:
-        if (0 == time_p) {
+        if (0 == timerVars[0]) {
             state = 0;
             inv = true; // Set Inverted rotation
         }
         break;
 
     case 2:
-        if (0 == time_p) {
+        if (0 == timerVars[0]) {
             state = 0;
             inv = false; // Set Normal Rotation
         }
@@ -174,69 +159,6 @@ void indv_control(void) {
     case 2:
         speed(-70);
         // OCR1A = 4000; // Pulse with 1ms (-90 degrees / CW max speed)
-        break;
-    }
-}
-
-void dist_control(void) {
-
-    switch (selected_servo) {
-    case 1:
-        _delay_ms(800);
-        OCR3B = MAX(1);
-        _delay_ms(800);
-        OCR3B = ZERO(1);
-        break;
-
-    case 2:
-        _delay_ms(800);
-        OCR3C = MAX(2);
-        _delay_ms(800);
-        // now scan back from 180 to 0 degrees
-        OCR3C = ZERO(2);
-        break;
-
-    case 3:
-        _delay_ms(800);
-        OCR1A = MAX(3);
-        _delay_ms(800);
-        // now scan back from 180 to 0 degrees
-        OCR1A = ZERO(3);
-        break;
-
-    case 4:
-        _delay_ms(800);
-        OCR3A = MAX(4);
-        _delay_ms(800);
-        // now scan back from 180 to 0 degrees
-        OCR3A = ZERO(4);
-        break;
-
-    case 5:
-        _delay_ms(800);
-        OCR4A = MAX(5);
-        _delay_ms(800);
-        // now scan back from 180 to 0 degrees
-        OCR4A = ZERO(5);
-        break;
-
-    case 6:
-        _delay_ms(800);
-        OCR4B = MAX(6);
-        _delay_ms(800);
-        // now scan back from 180 to 0 degrees
-        OCR4B = ZERO(6);
-        break;
-
-    case 7:
-        _delay_ms(800);
-        OCR4C = MAX(7);
-        _delay_ms(800);
-        // now scan back from 180 to 0 degrees
-        OCR4C = ZERO(7);
-        break;
-
-    default:
         break;
     }
 }
@@ -276,18 +198,17 @@ void initialization(void) {
     setup_dist();
     setup_indv();
 
-    timers();
+    initTimers();
 
     IR_interrupt();
     // setup_uart();
 
     sei(); // Enable global int
 
-    start_timer5(MaxTime); // Reset Timer
+    setTimer(inverterTimer, MaxTime); // Reset Timer
 
     state = 0;
     inv = false;
-    selected_servo = 1;
 }
 
 /*********************************************
@@ -300,19 +221,12 @@ int main(void) {
         // receive_Data();
         indv_control();
         // if (addr == 0x03) {
-        dist_control();
+        distStateMachine();
         //}
-    }
-}
-
-// Timer interrupt
-ISR(TIMER5_OVF_vect) {
-    if (time_p) {
-        time_p--;
     }
 }
 
 // Sensor interrupt
 ISR(INT0_vect) {
-    start_timer5(MaxTime); // Reset the timer
+    setTimer(inverterTimer, MaxTime); // Reset the timer
 }
