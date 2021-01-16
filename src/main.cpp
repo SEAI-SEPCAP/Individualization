@@ -14,7 +14,7 @@
 #define Motor_indv PINL3 // Individualization Servo Output Port - PORT 46
 #define IR_Sensor PIND0  // INT0 - IR Sensor Interrupt
 
-#define MaxTime 500
+#define Time_Invert 500
 #define MAX_CCW 1.0 // Duty-cycle for MAX CCW speed
 #define MAX_CW 2.0  // Dutry-cycle for MAX CW speed
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
@@ -82,11 +82,11 @@ void indv_control(void) {
     switch (state) {
     case 0:
         if (false == inv) {
-            state = 1;                        // Normal Rotation
-            setTimer(inverterTimer, MaxTime); // Reset Timer
+            state = 1;                            // Normal Rotation
+            setTimer(inverterTimer, Time_Invert); // Reset Timer
         } else {
-            state = 2;                        // Inverted Rotation
-            setTimer(inverterTimer, MaxTime); // Reset Timer
+            state = 2;                            // Inverted Rotation
+            setTimer(inverterTimer, Time_Invert); // Reset Timer
         }
         break;
 
@@ -164,7 +164,7 @@ void initialization(void) {
 
     resetServoPositions();
 
-    setTimer(inverterTimer, MaxTime); // Reset Timer
+    setTimer(inverterTimer, Time_Invert); // Reset Timer
 
     state = 0;
     inv = false;
@@ -187,5 +187,5 @@ int main(void) {
 
 // Sensor interrupt
 ISR(INT0_vect) {
-    setTimer(inverterTimer, MaxTime); // Reset the timer
+    setTimer(inverterTimer, Time_Invert); // Reset the timer
 }

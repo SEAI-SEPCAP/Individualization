@@ -26,7 +26,7 @@
 
 #define SERVO_OCR_1 OCR3B
 #define SERVO_OCR_2 OCR3C
-#define SERVO_OCR_3 OCR1A
+#define SERVO_OCR_3 OCR1B
 #define SERVO_OCR_4 OCR3A
 #define SERVO_OCR_5 OCR4A
 #define SERVO_OCR_6 OCR4B
