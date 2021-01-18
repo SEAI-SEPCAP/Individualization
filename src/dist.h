@@ -20,46 +20,44 @@
 #define SERVO_OPEN_TIME 40 // 800 ms
 
 uint8_t distState = DIST_STATE_IDLE;
-void distStateMachine(uint8_t selected) {
+void distStateMachine(uint16_t selected) {
 
     switch (distState) {
     case DIST_STATE_IDLE:
-        // Wait for packet
-        if (timerIsDone(2)) { // debug code
-            switch (selected) {
-            case 1:
-                distState = DIST_STATE_SERVO_1_CLOSED;
-                break;
+        switch (selected) {
+        case 1:
+            distState = DIST_STATE_SERVO_1_CLOSED;
+            break;
 
-            case 2:
-                distState = DIST_STATE_SERVO_2_CLOSED;
-                break;
+        case 2:
+            distState = DIST_STATE_SERVO_2_CLOSED;
+            break;
 
-            case 3:
-                distState = DIST_STATE_SERVO_3_CLOSED;
-                break;
+        case 3:
+            distState = DIST_STATE_SERVO_3_CLOSED;
+            break;
 
-            case 4:
-                distState = DIST_STATE_SERVO_4_CLOSED;
-                break;
+        case 4:
+            distState = DIST_STATE_SERVO_4_CLOSED;
+            break;
 
-            case 5:
-                distState = DIST_STATE_SERVO_5_CLOSED;
-                break;
+        case 5:
+            distState = DIST_STATE_SERVO_5_CLOSED;
+            break;
 
-            case 6:
-                distState = DIST_STATE_SERVO_6_CLOSED;
-                break;
+        case 6:
+            distState = DIST_STATE_SERVO_6_CLOSED;
+            break;
 
-            case 7:
-                distState = DIST_STATE_SERVO_7_CLOSED;
-                break;
+        case 7:
+            distState = DIST_STATE_SERVO_7_CLOSED;
+            break;
 
-            default:
-                selected = 0;
-                break;
-            }
+        default:
+            selected = DIST_STATE_IDLE;
+            break;
         }
+
         break;
 
     case DIST_STATE_SERVO_1_OPEN:

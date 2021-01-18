@@ -1,7 +1,6 @@
 #ifndef __TIMER_H__
 #define __TIMER_H__
 
-//#include <Arduino.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <stdbool.h>

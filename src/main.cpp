@@ -1,4 +1,3 @@
-
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <stdbool.h>
@@ -25,11 +24,11 @@ uint8_t state;
 float dc; // Duty-cycle
 bool inv;
 
-uint8_t addr;
+uint16_t addr;
 uint16_t r_data;
-uint8_t m_type;
+uint16_t message_type;
 
-uint8_t selected_servo = 1;
+uint16_t selected_servo = 0;
 
 void disc_speed_rot(double speed) {
     if (speed <= 0) {
@@ -139,10 +138,10 @@ void setup_uart(void) {
     /* Set baud rate */
     long BAUD = 9600;
     int UBBR_VAL = 16000000 / (BAUD * 16) - 1;
-    UBRR0H = (uint8_t)UBBR_VAL >> 8; // Define Baudrate
+    UBRR0H = (uint8_t)(UBBR_VAL >> 8); // Define Baudrate
     UBRR0L = (uint8_t)UBBR_VAL;
 
-    UCSR0C |= (3 << UCSZ01);               // 8 Data bits configuration
+    UCSR0C |= (3 << UCSZ10);               // 8 Data bits configuration
     UCSR0C |= (0 << USBS0);                // 1 stop bit
     UCSR0B |= (1 << RXEN0) | (1 << TXEN0); // Activate Rx, Tx
 }
@@ -155,12 +154,14 @@ void receive_Data(void) {
         ;            // Waits until has new data to be read
     */
     if (isData()) {
-        r_data = UDR0;            // Saves the data to be analised below
-        m_type = r_data & (0X0F); // Read the message type
-        if (1 != m_type)
+        r_data = UDR0;                  // Saves the data to be analised below
+        message_type = r_data & (0x0F); // Read the message type
+        if (1 != message_type)
             // If ADDR is different from 0x01, it is an emergency message
             // or another message wihtout meaning for dirtibution
             return;
+    } else {
+        return;
     }
 
     while (!(UCSR0A & (1 << RXC0)))
@@ -200,8 +201,7 @@ int main(void) {
     // Initialization
     initialization();
     while (1) {
-        if (isData())
-            receive_Data();
+        receive_Data();
         indv_control();
         distStateMachine(selected_servo);
     }
