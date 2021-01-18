@@ -1,7 +1,7 @@
 #ifndef __SERVO_CONTROL_H__
 #define __SERVO_CONTROL_H__
 
-#include <Arduino.h>
+//#include <Arduino.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <stdbool.h>

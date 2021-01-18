@@ -1,4 +1,4 @@
-#include <Arduino.h>
+
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <stdbool.h>
@@ -26,7 +26,7 @@ float dc; // Duty-cycle
 bool inv;
 
 uint8_t addr;
-uint8_t R_data;
+uint16_t r_data;
 uint8_t m_type;
 
 uint8_t selected_servo = 1;
@@ -155,8 +155,8 @@ void receive_Data(void) {
         ;            // Waits until has new data to be read
     */
     if (isData()) {
-        R_data = UDR0;            // Saves the data to be analised below
-        m_type = R_data & (0X0F); // Read the message type
+        r_data = UDR0;            // Saves the data to be analised below
+        m_type = r_data & (0X0F); // Read the message type
         if (1 != m_type)
             // If ADDR is different from 0x01, it is an emergency message
             // or another message wihtout meaning for dirtibution
@@ -200,7 +200,7 @@ int main(void) {
     // Initialization
     initialization();
     while (1) {
-        if (isData)
+        if (isData())
             receive_Data();
         indv_control();
         distStateMachine(selected_servo);
