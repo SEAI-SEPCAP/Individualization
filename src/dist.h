@@ -20,8 +20,7 @@
 #define SERVO_OPEN_TIME 40 // 800 ms
 
 uint8_t distState = DIST_STATE_IDLE;
-uint8_t selected = 1; // debug code
-void distStateMachine(void) {
+void distStateMachine(uint8_t selected) {
 
     switch (distState) {
     case DIST_STATE_IDLE:
@@ -30,41 +29,34 @@ void distStateMachine(void) {
             switch (selected) {
             case 1:
                 distState = DIST_STATE_SERVO_1_CLOSED;
-                selected++;
                 break;
 
             case 2:
                 distState = DIST_STATE_SERVO_2_CLOSED;
-                selected++;
                 break;
 
             case 3:
                 distState = DIST_STATE_SERVO_3_CLOSED;
-                selected++;
                 break;
 
             case 4:
                 distState = DIST_STATE_SERVO_4_CLOSED;
-                selected++;
                 break;
 
             case 5:
                 distState = DIST_STATE_SERVO_5_CLOSED;
-                selected++;
                 break;
 
             case 6:
                 distState = DIST_STATE_SERVO_6_CLOSED;
-                selected++;
                 break;
 
             case 7:
                 distState = DIST_STATE_SERVO_7_CLOSED;
-                selected++;
                 break;
 
             default:
-                selected = 1;
+                selected = 0;
                 break;
             }
         }

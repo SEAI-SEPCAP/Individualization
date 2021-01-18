@@ -26,7 +26,8 @@ float dc; // Duty-cycle
 bool inv;
 
 uint8_t addr;
-uint8_t aux;
+uint8_t R_data;
+uint8_t m_type;
 
 uint8_t selected_servo = 1;
 
@@ -146,12 +147,22 @@ void setup_uart(void) {
     UCSR0B |= (1 << RXEN0) | (1 << TXEN0); // Activate Rx, Tx
 }
 
-void receive_Data(void) {
+bool isData(void) { return (UCSR0A & (1 << RXC0)); }
 
+void receive_Data(void) {
+    /*
     while (!(UCSR0A & (1 << RXC0)))
         ;            // Waits until has new data to be read
-    aux = UDR0;      // Saves the data to be analised below
-    addr = aux >> 4; // read MSB (ADDR) from serial buffer
+    */
+    if (isData()) {
+        R_data = UDR0;            // Saves the data to be analised below
+        m_type = R_data & (0X0F); // Read the message type
+        if (1 != m_type)
+            // If ADDR is different from 0x01, it is an emergency message
+            // or another message wihtout meaning for dirtibution
+            return;
+    }
+
     while (!(UCSR0A & (1 << RXC0)))
         ;                  // Waits until has new data to be read
     selected_servo = UDR0; // Saves the data to be analised below
@@ -171,7 +182,7 @@ void initialization(void) {
     setup_indv();
     IR_interrupt();
 
-    // setup_uart();
+    setup_uart();
     sei(); // Enable global int
 
     resetServoPositions();
@@ -189,11 +200,10 @@ int main(void) {
     // Initialization
     initialization();
     while (1) {
-        // receive_Data();
+        if (isData)
+            receive_Data();
         indv_control();
-        // if (addr == 0x03) {
-        distStateMachine();
-        //}
+        distStateMachine(selected_servo);
     }
 }
 
