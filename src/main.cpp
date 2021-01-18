@@ -23,12 +23,14 @@
 uint8_t state;
 float dc; // Duty-cycle
 bool inv;
+bool emergency;
 
-uint16_t addr;
-uint16_t r_data;
-uint16_t message_type;
+uint8_t r_data;
+uint8_t message_type;
+uint8_t addr;
+uint8_t em_message;
 
-uint16_t selected_servo = 0;
+uint8_t selected_servo = 0;
 
 void disc_speed_rot(double speed) {
     if (speed <= 0) {
@@ -155,15 +157,15 @@ void receive_Data(void) {
     */
     if (isData()) {
         r_data = UDR0;                  // Saves the data to be analised below
-        message_type = r_data & (0x0F); // Read the message type
+        message_type = r_data & (0x0F); // Read the message type (Last 4 bits)
         if (1 != message_type)
             // If ADDR is different from 0x01, it is an emergency message
             // or another message wihtout meaning for dirtibution
             return;
-    } else {
+    } else { // No message has been received
         return;
     }
-
+    // Second Byte - Message body - distribution distributione
     while (!(UCSR0A & (1 << RXC0)))
         ;                  // Waits until has new data to be read
     selected_servo = UDR0; // Saves the data to be analised below
@@ -204,6 +206,10 @@ int main(void) {
         receive_Data();
         indv_control();
         distStateMachine(selected_servo);
+        while (emergency) {
+            disc_speed_rot(0);   // Stop the disk
+            distStateMachine(0); // Idle state - Don't do nothing
+        }
     }
 }
 
@@ -213,6 +219,4 @@ ISR(INT0_vect) {
 }
 
 // Emergency interrupt
-ISR(INT1_vect) {
-    // TODO
-}
+ISR(INT1_vect) { emergency = true; }
