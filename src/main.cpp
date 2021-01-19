@@ -216,7 +216,7 @@ void receive_data(void) {
         addr_rec = header & (0xF0); // Read the received addreess (First 4 bits)
         message_type = header & (0x0F); // Read the message type (Last 4 bits)
 
-        if (CAPSULE == r_data) {
+        if (CAPSULE == header) {
             while (!(UCSR0A & (1 << RXC0)))
                 ; // Waits until has new data to be read
             data = UDR0;
@@ -225,7 +225,7 @@ void receive_data(void) {
             while (!(UCSR0A & (1 << RXC0)))
                 ; // Waits until has new data to be read
             data = UDR0;
-            if (START == r_data) {
+            if (START == data) {
                 operation = true;
             } else {
                 operation = false;
