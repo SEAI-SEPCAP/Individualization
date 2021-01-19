@@ -32,7 +32,7 @@
 // Data
 #define EM_ON 0x00       // EM Stop on
 #define EM_OFF 0x01      // EM Stop off
-#define New_Capsule 0x00 // IR detects new capsule
+#define New_Capsule 0xFF // IR detects new capsule
 
 #define START 0x01 // Start operations
 #define STOP 0x00  // Stop operations
@@ -41,13 +41,15 @@ uint8_t state;
 float dc; // Duty-cycle
 bool inv;
 
-bool emergency = true;
+bool emergency = false;
 bool operation = false;
 uint8_t servo = 0;
 
 uint8_t r_data;
 uint8_t message_type;
 uint8_t addr;
+uint8_t header;
+uint8_t data;
 uint8_t addr_rec;
 uint8_t em_message;
 
@@ -209,19 +211,20 @@ bool isData(void) { return (UCSR0A & (1 << RXC0)); }
 void receive_data(void) {
 
     if (isData()) {
-        r_data = UDR0; // Saves the data to be analised below
+        header = UDR0; // Saves the data to be analised below
 
-        addr_rec = r_data & (0xF0); // Read the received addreess (First 4 bits)
-        message_type = r_data & (0x0F); // Read the message type (Last 4 bits)
+        addr_rec = header & (0xF0); // Read the received addreess (First 4 bits)
+        message_type = header & (0x0F); // Read the message type (Last 4 bits)
 
         if (CAPSULE == r_data) {
             while (!(UCSR0A & (1 << RXC0)))
-                ;              // Waits until has new data to be read
-            insert_code(UDR0); // Saves the morot code in the queue
-        } else if (INDV == r_data) {
+                ; // Waits until has new data to be read
+            data = UDR0;
+            insert_code(data); // Saves the morot code in the queue
+        } else if (INDV == header) {
             while (!(UCSR0A & (1 << RXC0)))
                 ; // Waits until has new data to be read
-            r_data = UDR0;
+            data = UDR0;
             if (START == r_data) {
                 operation = true;
             } else {
