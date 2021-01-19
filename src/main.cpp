@@ -26,7 +26,7 @@
 #define INTERFACE 0x41 // Interface + IR new capsule
 #define EM 0x00        // Broadcast - EM
 // To receive
-#define INDV 0x12    // Individualization + operation
+#define INDV 0x02    // Individualization + operation
 #define CAPSULE 0x01 // Distribution  + New capsule
 
 // Data
