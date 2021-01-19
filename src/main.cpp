@@ -1,6 +1,7 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <util/delay.h>
 
@@ -20,17 +21,49 @@
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
 #define P_FCLK 2000 // (16M/1000)/8
 
+#define interface 0x41 // Destenitation: interface; Message type - new capsule
+#define interface 0x00 // IR detects a new capsule
+
 uint8_t state;
 float dc; // Duty-cycle
 bool inv;
-bool emergency;
+bool emergency = false;
 
 uint8_t r_data;
 uint8_t message_type;
 uint8_t addr;
 uint8_t em_message;
 
-uint8_t selected_servo = 0;
+// Select servo data - Queue
+#define SIZE 5
+uint8_t selected_servo[SIZE];
+uint8_t servo = 0;
+uint8_t rear = -1;
+uint8_t front = -1;
+
+// Inset the destination code to the end of the queue
+void insert_code(uint8_t dest_code) {
+    if (rear == SIZE - 1)
+        return;
+    else {
+        if (front == -1)
+            front = 0;
+        rear++;
+        selected_servo[rear] = dest_code;
+    }
+}
+
+// Select the laste code inserted and remove it frome the queue
+void display_rem_code(void) {
+    if (front == -1)
+        servo = 0;
+    else {
+        servo = selected_servo[front];
+        front++;
+        if (front > rear)
+            front = rear = -1;
+    }
+}
 
 void disc_speed_rot(double speed) {
     if (speed <= 0) {
@@ -76,9 +109,9 @@ void EM_interrupt(void) {
     /* Set Interrupt pins as input and activate internal pull-ups */
     DDRD &= (0 << EM_BUTTOM);
     PORTD |= _BV(EM_BUTTOM);
-    /* Interrupt request at falling edge for INT1 */
-    EICRA |= _BV(ISC11);
-    /* Enable INT0 */
+    /* Interrupt request at any edge for INT1 */
+    EICRA |= _BV(ISC10); //
+    /* Enable INT1 */
     EIMSK |= _BV(INT1);
 }
 
@@ -167,8 +200,8 @@ void receive_Data(void) {
     }
     // Second Byte - Message body - distribution distributione
     while (!(UCSR0A & (1 << RXC0)))
-        ;                  // Waits until has new data to be read
-    selected_servo = UDR0; // Saves the data to be analised below
+        ;              // Waits until has new data to be read
+    insert_code(UDR0); // Saves the data to be analised below
 }
 
 void send_Data(uint8_t Data) {
@@ -202,21 +235,32 @@ void initialization(void) {
 int main(void) {
     // Initialization
     initialization();
-    while (1) {
-        receive_Data();
+    while (!emergency) {
         indv_control();
-        distStateMachine(selected_servo);
-        while (emergency) {
-            disc_speed_rot(0);   // Stop the disk
-            distStateMachine(0); // Idle state - Don't do nothing
-        }
+        receive_Data();
+        distStateMachine(servo);
+    }
+
+    if (emergency) {
+        disc_speed_rot(0);   // Stop the disk
+        distStateMachine(0); // Idle state - Don't do anything
     }
 }
 
 // Sensor interrupt
 ISR(INT0_vect) {
     setTimer(inverterTimer, Time_Invert); // Reset the timer
+    // TODO
+    display_rem_code();
 }
 
-// Emergency interrupt
-ISR(INT1_vect) { emergency = true; }
+// Emergency interrupt - any edge generates an interrupt
+// FE - Emergency is TRUE
+// RE - Emergency is FALSE
+ISR(INT1_vect) {
+    if (emergency) {
+        emergency = false;
+    } else {
+        emergency = true;
+    }
+}
