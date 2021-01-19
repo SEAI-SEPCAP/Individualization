@@ -174,15 +174,12 @@ int main(void) {
     while (1) {
         receive_data();
 
-        if (operation) {
-            indv_control();
-        }
-
-        distStateMachine(servo);
-
         if (emergency) {
             disc_speed_rot(0);   // Stop the disk
             distStateMachine(0); // Idle state - Don't do anything
+        } else if (operation) {
+            indv_control();
+            distStateMachine(servo);
         }
     }
 }
