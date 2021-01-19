@@ -14,7 +14,8 @@
 
 #define Motor_indv PINL3 // Individualization Servo Output Port - PORT 46
 #define IR_Sensor PIND0  // INT0 - IR Sensor Interrupt
-#define EM_BUTTOM PIND1  // INT1 - EM Bottom Interrupt
+#define EM_BUTTOM_EMERGENCY PIND1 // INT1 - EM Bottom Interrupt - Emergency
+#define EM_BUTTOM_RESUME PIND2    // INT2 - EM Bottom Interrupt - Resume
 
 #define Time_Invert 500
 #define MAX_CCW 1.0 // Duty-cycle for MAX CCW speed
@@ -63,13 +64,19 @@ void IR_interrupt(void) {
 }
 
 void EM_interrupt(void) {
-    /* Set Interrupt pins as input and activate internal pull-ups */
-    DDRD &= (0 << EM_BUTTOM);
-    PORTD |= _BV(EM_BUTTOM);
+    /* Set Interrupt pins as input */
+    PORTD |= _BV(EM_BUTTOM_EMERGENCY);
     /* Interrupt request at any edge for INT1 */
-    EICRA |= _BV(ISC10); //
+    EICRA |= _BV(ISC11); //
     /* Enable INT1 */
     EIMSK |= _BV(INT1);
+
+    /* Set Interrupt pins as input*/
+    PORTD |= _BV(EM_BUTTOM_RESUME);
+    /* Interrupt request at any edge for INT1 */
+    EICRA |= _BV(ISC21) | _BV(ISC20); //
+    /* Enable INT1 */
+    EIMSK |= _BV(INT2);
 }
 
 /*********************************************
@@ -176,10 +183,6 @@ int main(void) {
         if (emergency) {
             disc_speed_rot(0);   // Stop the disk
             distStateMachine(0); // Idle state - Don't do anything
-            send_Data(EM, EM_ON);
-            while (emergency) {
-                receive_data();
-            }
         }
     }
 }
@@ -191,17 +194,19 @@ ISR(INT0_vect) {
     if (!(isempty()))
         display_rem_code();
 
-    send_Data(INTERFACE, New_Capsule);
+    sendNewCapsuleDetection();
 }
 
 // Emergency interrupt - any edge generates an interrupt
 // FE - Emergency is TRUE
 // RE - Emergency is FALSE
 ISR(INT1_vect) {
-    if (emergency) {
-        emergency = false;
-        send_Data(EM, EM_OFF);
-    } else {
-        emergency = true;
-    }
+    emergency = true;
+    operation = false;
+    sendEmergency_Emergency();
+}
+
+ISR(INT2_vect) {
+    emergency = false;
+    sendEmergency_Resume();
 }
