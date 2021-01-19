@@ -21,25 +21,42 @@
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
 #define P_FCLK 2000 // (16M/1000)/8
 
-#define interface 0x41 // Destenitation: interface; Message type - new capsule
-#define interface 0x00 // IR detects a new capsule
+/************* Address + Message Type ******************/
+// To send
+#define INTERFACE 0x41 // Interface + IR new capsule
+#define EM 0x00        // Broadcast - EM
+// To receive
+#define INDV 0x12    // Individualization + operation
+#define CAPSULE 0x01 // Distribution  + New capsule
+
+// Data
+#define EM_ON 0x00       // EM Stop on
+#define EM_OFF 0x01      // EM Stop off
+#define New_Capsule 0x00 // IR detects new capsule
+
+#define START 0x01 // Start operations
+#define STOP 0x00  // Stop operations
 
 uint8_t state;
 float dc; // Duty-cycle
 bool inv;
-bool emergency = false;
+
+bool emergency = true;
+bool operation = false;
+uint8_t servo = 0;
 
 uint8_t r_data;
 uint8_t message_type;
 uint8_t addr;
+uint8_t addr_rec;
 uint8_t em_message;
 
 // Select servo data - Queue
-#define SIZE 5
+#define SIZE 10
 uint8_t selected_servo[SIZE];
-uint8_t servo = 0;
 uint8_t rear = -1;
 uint8_t front = -1;
+uint8_t elements = 0;
 
 // Inset the destination code to the end of the queue
 void insert_code(uint8_t dest_code) {
@@ -50,20 +67,26 @@ void insert_code(uint8_t dest_code) {
             front = 0;
         rear++;
         selected_servo[rear] = dest_code;
+        elements++;
     }
 }
 
 // Select the laste code inserted and remove it frome the queue
 void display_rem_code(void) {
-    if (front == -1)
-        servo = 0;
-    else {
+    if (front == -1) {
+        return;
+    } else {
         servo = selected_servo[front];
         front++;
-        if (front > rear)
+        elements--;
+        if (front > rear) {
             front = rear = -1;
+            elements = 0;
+        }
     }
 }
+
+bool isempty(void) { return (elements == 0); }
 
 void disc_speed_rot(double speed) {
     if (speed <= 0) {
@@ -183,32 +206,42 @@ void setup_uart(void) {
 
 bool isData(void) { return (UCSR0A & (1 << RXC0)); }
 
-void receive_Data(void) {
-    /*
-    while (!(UCSR0A & (1 << RXC0)))
-        ;            // Waits until has new data to be read
-    */
+void receive_data(void) {
+
     if (isData()) {
-        r_data = UDR0;                  // Saves the data to be analised below
+        r_data = UDR0; // Saves the data to be analised below
+
+        addr_rec = r_data & (0xF0); // Read the received addreess (First 4 bits)
         message_type = r_data & (0x0F); // Read the message type (Last 4 bits)
-        if (1 != message_type)
-            // If ADDR is different from 0x01, it is an emergency message
-            // or another message wihtout meaning for dirtibution
+
+        if (CAPSULE == r_data) {
+            while (!(UCSR0A & (1 << RXC0)))
+                ;              // Waits until has new data to be read
+            insert_code(UDR0); // Saves the morot code in the queue
+        } else if (INDV == r_data) {
+            while (!(UCSR0A & (1 << RXC0)))
+                ; // Waits until has new data to be read
+            r_data = UDR0;
+            if (START == r_data) {
+                operation = true;
+            } else {
+                operation = false;
+            }
+        } else
             return;
-    } else { // No message has been received
+    } else {
         return;
     }
-    // Second Byte - Message body - distribution distributione
-    while (!(UCSR0A & (1 << RXC0)))
-        ;              // Waits until has new data to be read
-    insert_code(UDR0); // Saves the data to be analised below
 }
 
-void send_Data(uint8_t Data) {
+void send_Data(uint8_t addr, uint8_t message) {
 
     while (!(UCSR0A & (1 << UDRE0)))
         ;        // Wait until the buffer is empty
-    UDR0 = Data; // Copy to UDR0 the correspondent data
+    UDR0 = addr; // Copy to UDR0 the correspondent data
+    while (!(UCSR0A & (1 << UDRE0)))
+        ; // Wait until the buffer is empty
+    UDR0 = message;
 }
 
 void initialization(void) {
@@ -217,6 +250,7 @@ void initialization(void) {
 
     setup_indv();
     IR_interrupt();
+    EM_interrupt();
 
     setup_uart();
     sei(); // Enable global int
@@ -235,15 +269,24 @@ void initialization(void) {
 int main(void) {
     // Initialization
     initialization();
-    while (!emergency) {
-        indv_control();
-        receive_Data();
-        distStateMachine(servo);
-    }
 
-    if (emergency) {
-        disc_speed_rot(0);   // Stop the disk
-        distStateMachine(0); // Idle state - Don't do anything
+    while (1) {
+        receive_data();
+
+        if (operation) {
+            indv_control();
+        }
+
+        distStateMachine(servo);
+
+        if (emergency) {
+            disc_speed_rot(0);   // Stop the disk
+            distStateMachine(0); // Idle state - Don't do anything
+            send_Data(EM, EM_ON);
+            while (emergency) {
+                receive_data();
+            }
+        }
     }
 }
 
@@ -251,7 +294,10 @@ int main(void) {
 ISR(INT0_vect) {
     setTimer(inverterTimer, Time_Invert); // Reset the timer
     // TODO
-    display_rem_code();
+    if (!(isempty()))
+        display_rem_code();
+
+    send_Data(INTERFACE, New_Capsule);
 }
 
 // Emergency interrupt - any edge generates an interrupt
@@ -260,6 +306,7 @@ ISR(INT0_vect) {
 ISR(INT1_vect) {
     if (emergency) {
         emergency = false;
+        send_Data(EM, EM_OFF);
     } else {
         emergency = true;
     }

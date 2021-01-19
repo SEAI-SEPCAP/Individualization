@@ -21,7 +21,7 @@
 #define MAX4 1700
 #define MAX5 1900
 #define MAX6 2700
-#define MAX7 1800
+#define MAX7 1900
 
 #define SERVO_OCR_1 OCR3B
 #define SERVO_OCR_2 OCR3C
