@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <stdbool.h>
@@ -12,6 +13,8 @@
 
 #define FCPU 16000000ul
 
+//#define LED_BUILTIN PINB7
+
 #define Motor_indv PINL3 // Individualization Servo Output Port - PORT 46
 #define IR_Sensor PIND0  // INT0 - IR Sensor Interrupt
 #define EM_BUTTOM_EMERGENCY PIND1 // INT1 - EM Bottom Interrupt - Emergency
@@ -22,6 +25,7 @@
 #define MAX_CW 2.0  // Dutry-cycle for MAX CW speed
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
 #define P_FCLK 2000 // (16M/1000)/8
+#define DISC_SPEED 10
 
 void disc_speed_rot(double speed) {
     if (speed <= 0) {
@@ -59,6 +63,7 @@ void IR_interrupt(void) {
     PORTD |= _BV(IR_Sensor);
     /* Interrupt request at falling edge for INT0 */
     EICRA |= _BV(ISC01);
+    EICRA &= ~_BV(ISC00);
     /* Enable INT0 */
     EIMSK |= _BV(INT0);
 }
@@ -102,17 +107,19 @@ void indv_control(void) {
         break;
 
     case 1:
-        if (0 == timerVars[0]) {
+        /*if (timerIsDone(inverterTimer)) {
             state = 0;
             inv = true; // Set Inverted rotation
-        }
+        }*/
+        PORTB |= _BV(LED_BUILTIN);
         break;
 
     case 2:
-        if (0 == timerVars[0]) {
+        /*if (timerIsDone(inverterTimer)) {
             state = 0;
             inv = false; // Set Normal Rotation
-        }
+        }*/
+        PORTB &= ~_BV(LED_BUILTIN);
         break;
     }
 
@@ -122,11 +129,11 @@ void indv_control(void) {
         // OCR1A = 3000; // Pulse with 1.5ms (0 degrees / STOP)
         break;
     case 1:
-        disc_speed_rot(70);
+        disc_speed_rot(DISC_SPEED);
         // OCR1A = 2800; // Pulse with 1ms (90 degrees / CCW max speed)
         break;
     case 2:
-        disc_speed_rot(-70);
+        disc_speed_rot(-DISC_SPEED);
         // OCR1A = 4000; // Pulse with 1ms (-90 degrees / CW max speed)
         break;
     }
@@ -162,6 +169,7 @@ void initialization(void) {
 
     state = 0;
     inv = false;
+    DDRB |= _BV(LED_BUILTIN);
 }
 
 /*********************************************
@@ -173,13 +181,25 @@ int main(void) {
 
     while (1) {
         receive_data();
+        /* if (emergency) {
+             PORTB |= _BV(LED_BUILTIN);
+         } else {
+             PORTB &= ~_BV(LED_BUILTIN);
+         }*/
 
-        if (emergency) {
-            disc_speed_rot(0);   // Stop the disk
-            distStateMachine(0); // Idle state - Don't do anything
-        } else if (operation) {
+        /* if (emergency) {
+             disc_speed_rot(0);   // Stop the disk
+             distStateMachine(0); // Idle state - Don't do anything
+         } else */
+        if (operation) {
             indv_control();
             distStateMachine(servo);
+        } else {
+            disc_speed_rot(0);
+            distStateMachine(0);
+            state = 0;
+            inv = false;
+            resetServoPositions();
         }
     }
 }
@@ -191,7 +211,7 @@ ISR(INT0_vect) {
     if (!(isempty()))
         display_rem_code();
 
-    sendNewCapsuleDetection();
+    // sendNewCapsuleDetection();
 }
 
 // Emergency interrupt - any edge generates an interrupt
@@ -200,10 +220,10 @@ ISR(INT0_vect) {
 ISR(INT1_vect) {
     emergency = true;
     operation = false;
-    sendEmergency_Emergency();
+    // sendEmergency_Emergency();
 }
 
 ISR(INT2_vect) {
     emergency = false;
-    sendEmergency_Resume();
+    // sendEmergency_Resume();
 }
