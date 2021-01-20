@@ -220,12 +220,18 @@ ISR(INT0_vect) {
 // FE - Emergency is TRUE
 // RE - Emergency is FALSE
 ISR(INT1_vect) {
-    emergency = true;
-    operation = false;
-    sendEmergency_Emergency();
+    if (timerIsDone(emergencyDebounceTimer)) {
+        setTimer(emergencyDebounceTimer, 5);
+        emergency = true;
+        operation = false;
+        sendEmergency_Emergency();
+    }
 }
 
 ISR(INT2_vect) {
-    emergency = false;
-    sendEmergency_Resume();
+    if (timerIsDone(emergencyDebounceTimer)) {
+        setTimer(emergencyDebounceTimer, 5);
+        emergency = false;
+        sendEmergency_Resume();
+    }
 }
