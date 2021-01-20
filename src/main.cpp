@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <stdbool.h>
@@ -13,7 +12,12 @@
 
 #define FCPU 16000000ul
 
-//#define LED_BUILTIN PINB7
+#ifdef LED_BUILTIN
+#undef LED_BUILTIN
+#endif
+#define LED_BUILTIN PINB7
+#define turnOnDebugLED() PORTB |= _BV(LED_BUILTIN);
+#define turnOffDebugLED() PORTB &= ~_BV(LED_BUILTIN);
 
 #define Motor_indv PINL3 // Individualization Servo Output Port - PORT 46
 #define IR_Sensor PIND0  // INT0 - IR Sensor Interrupt
@@ -63,7 +67,6 @@ void IR_interrupt(void) {
     PORTD |= _BV(IR_Sensor);
     /* Interrupt request at falling edge for INT0 */
     EICRA |= _BV(ISC01);
-    EICRA &= ~_BV(ISC00);
     /* Enable INT0 */
     EIMSK |= _BV(INT0);
 }
@@ -111,7 +114,7 @@ void indv_control(void) {
             state = 0;
             inv = true; // Set Inverted rotation
         }*/
-        PORTB |= _BV(LED_BUILTIN);
+        turnOnDebugLED();
         break;
 
     case 2:
@@ -119,22 +122,19 @@ void indv_control(void) {
             state = 0;
             inv = false; // Set Normal Rotation
         }*/
-        PORTB &= ~_BV(LED_BUILTIN);
+        turnOffDebugLED();
         break;
     }
 
     switch (state) {
     case 0:
-        disc_speed_rot(0); // STOP
-        // OCR1A = 3000; // Pulse with 1.5ms (0 degrees / STOP)
+        disc_speed_rot(0);
         break;
     case 1:
         disc_speed_rot(DISC_SPEED);
-        // OCR1A = 2800; // Pulse with 1ms (90 degrees / CCW max speed)
         break;
     case 2:
         disc_speed_rot(-DISC_SPEED);
-        // OCR1A = 4000; // Pulse with 1ms (-90 degrees / CW max speed)
         break;
     }
 }
@@ -182,9 +182,9 @@ int main(void) {
     while (1) {
         receive_data();
         /* if (emergency) {
-             PORTB |= _BV(LED_BUILTIN);
+             turnOnDebugLED();
          } else {
-             PORTB &= ~_BV(LED_BUILTIN);
+             turnOffDebugLED();
          }*/
 
         /* if (emergency) {
@@ -211,7 +211,7 @@ ISR(INT0_vect) {
     if (!isQueueEmpty())
         queuePop();
 
-    // sendNewCapsuleDetection();
+    sendNewCapsuleDetection();
 }
 
 // Emergency interrupt - any edge generates an interrupt
@@ -220,10 +220,10 @@ ISR(INT0_vect) {
 ISR(INT1_vect) {
     emergency = true;
     operation = false;
-    // sendEmergency_Emergency();
+    sendEmergency_Emergency();
 }
 
 ISR(INT2_vect) {
     emergency = false;
-    // sendEmergency_Resume();
+    sendEmergency_Resume();
 }
