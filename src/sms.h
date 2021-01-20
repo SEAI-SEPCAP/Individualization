@@ -82,7 +82,7 @@ void receive_data(void) {
             return;
 
         if (msgType == SMS_MSGTYPE__NEWCAPSULE) {
-            insert_code(data); // Saves the morot code in the queue
+            queuePush(data); // Saves the morot code in the queue
         } else if (msgType == SMS_MSGTYPE__STARTSTOP) {
             if (data == SMS_MSGTYPE__STARTSTOP__START) {
                 operation = true;

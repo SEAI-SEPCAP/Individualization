@@ -193,7 +193,7 @@ int main(void) {
          } else */
         if (operation) {
             indv_control();
-            distStateMachine(servo);
+            distStateMachine(selected_servo);
         } else {
             disc_speed_rot(0);
             distStateMachine(0);
@@ -208,8 +208,8 @@ int main(void) {
 ISR(INT0_vect) {
     setTimer(inverterTimer, Time_Invert); // Reset the timer
     // TODO
-    if (!(isempty()))
-        display_rem_code();
+    if (!isQueueEmpty())
+        queuePop();
 
     // sendNewCapsuleDetection();
 }
