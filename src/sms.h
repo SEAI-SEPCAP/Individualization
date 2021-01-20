@@ -38,13 +38,10 @@ bool inv;
 bool emergency = false;
 bool operation = false;
 
-uint8_t r_data;
-uint8_t msgType;
-uint8_t addr;
 uint8_t header;
 uint8_t data;
 uint8_t msgAddr;
-uint8_t em_message;
+uint8_t msgType;
 
 uint8_t getMsgAdress(uint8_t headerByte) {
     return (headerByte & SMS_ADDRESS_MASK) >> 4;
