@@ -19,6 +19,7 @@
 
 #define SERVO_OPEN_TIME 40 // 800 ms
 
+uint8_t selected_servo = 0;
 uint8_t distState = 0;
 
 void distStateMachine(uint8_t selected) {

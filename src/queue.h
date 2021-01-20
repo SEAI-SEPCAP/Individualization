@@ -11,10 +11,11 @@
 // Select servo data - Queue
 #define QUEUE_SIZE 10
 uint8_t queue[QUEUE_SIZE];
-uint8_t selected_servo = 0;
-uint8_t rear = -1;
-uint8_t front = -1;
+
 uint8_t elements = 0;
+
+bool isQueueEmpty(void) { return (elements == 0); }
+bool isQueueFull(void) { return (elements == QUEUE_SIZE); }
 
 // Inset the destination code to the end of the queue
 void queuePush(uint8_t dest_code) {
@@ -39,8 +40,5 @@ uint8_t queuePop(void) {
         return ret;
     }
 }
-
-bool isQueueEmpty(void) { return (elements == 0); }
-bool isQueueFull(void) { return (elements == QUEUE_SIZE); }
 
 #endif
