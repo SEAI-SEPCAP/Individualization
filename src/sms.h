@@ -62,7 +62,7 @@ bool isMsgAddressedAtUs(uint8_t msgAddr) {
     return false;
 }
 
-bool isData(void) { return (UCSR0A & (1 << RXC0)); }
+bool isData(void) { return (UCSR0A & _BV(RXC0)); }
 
 void receive_data(void) {
 
@@ -92,7 +92,7 @@ void receive_data(void) {
     }
 }
 
-bool isClearToSend() { return UCSR0A & (1 << UDRE0); }
+bool isClearToSend() { return UCSR0A & _BV(UDRE0); }
 
 void send_Data(uint8_t header, uint8_t data) {
 

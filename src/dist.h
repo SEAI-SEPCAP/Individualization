@@ -1,3 +1,5 @@
+#include "debug.h"
+#include "queue.h"
 #include "servoControl.h"
 #include "timer.h"
 
@@ -17,15 +19,20 @@
 #define DIST_STATE_SERVO_7_OPEN 13
 #define DIST_STATE_SERVO_7_CLOSED 14
 
-#define SERVO_OPEN_TIME 40 // 800 ms
+#define SERVO_OPEN_TIME 0 // 800 ms
 
 uint8_t selected_servo = 0;
-uint8_t distState = 0;
+uint8_t distState = DIST_STATE_IDLE;
+bool capsuleCleared = false;
+bool hold_disc = false;
 
-void distStateMachine(uint8_t selected) {
+void distStateMachine(uint8_t selected, bool new_capsule = false) {
 
     switch (distState) {
     case DIST_STATE_IDLE:
+        if (!isQueueEmpty() && new_capsule) {
+            hold_disc = true;
+        }
         switch (selected) {
         case 1:
             distState = DIST_STATE_SERVO_1_CLOSED;
@@ -66,6 +73,62 @@ void distStateMachine(uint8_t selected) {
         if (timerIsDone(openServoTimer)) {
             closeServo(1);
             distState = DIST_STATE_IDLE;
+            hold_disc = false;
+            selected = 0;
+        }
+        break;
+
+    case DIST_STATE_SERVO_2_OPEN:
+        if (timerIsDone(openServoTimer)) {
+            closeServo(2);
+            distState = DIST_STATE_IDLE;
+            hold_disc = false;
+            selected = 0;
+        }
+        break;
+
+    case DIST_STATE_SERVO_3_OPEN:
+        if (timerIsDone(openServoTimer)) {
+            closeServo(3);
+            distState = DIST_STATE_IDLE;
+            hold_disc = false;
+            selected = 0;
+        }
+        break;
+
+    case DIST_STATE_SERVO_4_OPEN:
+        if (timerIsDone(openServoTimer)) {
+            closeServo(4);
+            distState = DIST_STATE_IDLE;
+            hold_disc = false;
+            selected = 0;
+        }
+        break;
+
+    case DIST_STATE_SERVO_5_OPEN:
+        if (timerIsDone(openServoTimer)) {
+            closeServo(5);
+            distState = DIST_STATE_IDLE;
+            hold_disc = false;
+            selected = 0;
+        }
+        break;
+
+    case DIST_STATE_SERVO_6_OPEN:
+        if (timerIsDone(openServoTimer)) {
+            closeServo(6);
+            distState = DIST_STATE_IDLE;
+            hold_disc = false;
+            selected = 0;
+        }
+        break;
+
+    case DIST_STATE_SERVO_7_OPEN:
+        if (timerIsDone(openServoTimer)) {
+            closeServo(7);
+            distState = DIST_STATE_IDLE;
+            hold_disc = false;
+            selected = 0;
         }
         break;
 
@@ -75,24 +138,10 @@ void distStateMachine(uint8_t selected) {
         distState = DIST_STATE_SERVO_1_OPEN;
         break;
 
-    case DIST_STATE_SERVO_2_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(2);
-            distState = DIST_STATE_IDLE;
-        }
-        break;
-
     case DIST_STATE_SERVO_2_CLOSED:
         openServo(2);
         setTimer(openServoTimer, SERVO_OPEN_TIME);
         distState = DIST_STATE_SERVO_2_OPEN;
-        break;
-
-    case DIST_STATE_SERVO_3_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(3);
-            distState = DIST_STATE_IDLE;
-        }
         break;
 
     case DIST_STATE_SERVO_3_CLOSED:
@@ -101,24 +150,10 @@ void distStateMachine(uint8_t selected) {
         distState = DIST_STATE_SERVO_3_OPEN;
         break;
 
-    case DIST_STATE_SERVO_4_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(4);
-            distState = DIST_STATE_IDLE;
-        }
-        break;
-
     case DIST_STATE_SERVO_4_CLOSED:
         openServo(4);
         setTimer(openServoTimer, SERVO_OPEN_TIME);
         distState = DIST_STATE_SERVO_4_OPEN;
-        break;
-
-    case DIST_STATE_SERVO_5_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(5);
-            distState = DIST_STATE_IDLE;
-        }
         break;
 
     case DIST_STATE_SERVO_5_CLOSED:
@@ -127,24 +162,10 @@ void distStateMachine(uint8_t selected) {
         distState = DIST_STATE_SERVO_5_OPEN;
         break;
 
-    case DIST_STATE_SERVO_6_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(6);
-            distState = DIST_STATE_IDLE;
-        }
-        break;
-
     case DIST_STATE_SERVO_6_CLOSED:
         openServo(6);
         setTimer(openServoTimer, SERVO_OPEN_TIME);
         distState = DIST_STATE_SERVO_6_OPEN;
-        break;
-
-    case DIST_STATE_SERVO_7_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(7);
-            distState = DIST_STATE_IDLE;
-        }
         break;
 
     case DIST_STATE_SERVO_7_CLOSED:

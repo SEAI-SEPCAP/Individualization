@@ -6,19 +6,13 @@
 #include <stdlib.h>
 #include <util/delay.h>
 
+#include "debug.h"
 #include "dist.h"
 #include "servoControl.h"
 #include "sms.h"
 #include "timer.h"
 
 #define FCPU 16000000ul
-
-#ifdef LED_BUILTIN
-#undef LED_BUILTIN
-#endif
-#define LED_BUILTIN PINB7
-#define turnOnDebugLED() PORTB |= _BV(LED_BUILTIN);
-#define turnOffDebugLED() PORTB &= ~_BV(LED_BUILTIN);
 
 #define Motor_indv PINL3 // Individualization Servo Output Port - PORT 46
 #define IR_Sensor PIND0  // INT0 - IR Sensor Interrupt
@@ -31,6 +25,8 @@
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
 #define P_FCLK 2000 // (16M/1000)/8
 #define DISC_SPEED 10
+
+bool new_capsule = false;
 
 void disc_speed_rot(double speed) {
     if (speed <= 0) {
@@ -54,7 +50,6 @@ void initTimers(void) {
     TCCR5A |= _BV(WGM51) | (0 << WGM50);             // Fast PWM: TOP: ICR5
     TCCR5B = _BV(WGM53) | _BV(WGM52);                // Fast PWM: TOP: ICR5
     TCCR5B |= (0 << CS52) | _BV(CS51) | (0 << CS50); // Preesc = 8
-    TIMSK5 |= _BV(TOIE5); // Overflow interrupt enable
 }
 
 /*********************************************
@@ -101,7 +96,7 @@ void setup_indv(void) {
 void indv_control(void) {
     switch (state) {
     case 0:
-        if (false == inv) {
+        if (!inv) {
             state = 1;                            // Normal Rotation
             setTimer(inverterTimer, Time_Invert); // Reset Timer
         } else {
@@ -115,7 +110,6 @@ void indv_control(void) {
             state = 0;
             inv = true; // Set Inverted rotation
         }*/
-        turnOnDebugLED();
         break;
 
     case 2:
@@ -123,7 +117,6 @@ void indv_control(void) {
             state = 0;
             inv = false; // Set Normal Rotation
         }*/
-        turnOffDebugLED();
         break;
     }
 
@@ -132,10 +125,16 @@ void indv_control(void) {
         disc_speed_rot(0);
         break;
     case 1:
-        disc_speed_rot(DISC_SPEED);
+        if (hold_disc)
+            disc_speed_rot(0);
+        else
+            disc_speed_rot(DISC_SPEED);
         break;
     case 2:
-        disc_speed_rot(-DISC_SPEED);
+        if (hold_disc)
+            disc_speed_rot(0);
+        else
+            disc_speed_rot(-DISC_SPEED);
         break;
     }
 }
@@ -156,10 +155,14 @@ void setup_uart(void) {
 void initialization(void) {
     initDistPins();
     initTimers();
+    initTimersTimer();
 
     setup_indv();
     IR_interrupt();
-    EM_interrupt();
+    // EM_interrupt();
+
+    initDebugLED();
+    turnOffDebugLED();
 
     setup_uart();
     sei(); // Enable global int
@@ -170,7 +173,6 @@ void initialization(void) {
 
     state = 0;
     inv = false;
-    DDRB |= _BV(LED_BUILTIN);
 }
 
 /*********************************************
@@ -182,11 +184,12 @@ int main(void) {
 
     while (1) {
         receive_data();
-        /* if (emergency) {
-             turnOnDebugLED();
-         } else {
-             turnOffDebugLED();
-         }*/
+
+        /*if (timerIsDone(openServoTimer)) {
+            turnOnDebugLED();
+        } else {
+            turnOffDebugLED();
+        }*/
 
         /* if (emergency) {
              disc_speed_rot(0);   // Stop the disk
@@ -194,7 +197,10 @@ int main(void) {
          } else */
         if (operation) {
             indv_control();
-            distStateMachine(selected_servo);
+            distStateMachine(selected_servo, new_capsule);
+            if (new_capsule) {
+                new_capsule = false;
+            }
         } else {
             disc_speed_rot(0);
             distStateMachine(0);
@@ -209,9 +215,9 @@ int main(void) {
 ISR(INT0_vect) {
     setTimer(inverterTimer, Time_Invert); // Reset the timer
     if (timerIsDone(capsuleDetectionDebounceTimer)) {
-        setTimer(capsuleDetectionDebounceTimer, 5);
+        setTimer(capsuleDetectionDebounceTimer, DEBOUNCE_TIME);
         selected_servo = queuePop();
-
+        new_capsule = true;
         sendNewCapsuleDetection();
     }
 }
@@ -221,17 +227,17 @@ ISR(INT0_vect) {
 // RE - Emergency is FALSE
 ISR(INT1_vect) {
     if (timerIsDone(emergencyDebounceTimer)) {
-        setTimer(emergencyDebounceTimer, 5);
+        setTimer(emergencyDebounceTimer, DEBOUNCE_TIME);
         emergency = true;
         operation = false;
-        sendEmergency_Emergency();
+        // sendEmergency_Emergency();
     }
 }
 
 ISR(INT2_vect) {
     if (timerIsDone(emergencyDebounceTimer)) {
-        setTimer(emergencyDebounceTimer, 5);
+        setTimer(emergencyDebounceTimer, DEBOUNCE_TIME);
         emergency = false;
-        sendEmergency_Resume();
+        // sendEmergency_Resume();
     }
 }
