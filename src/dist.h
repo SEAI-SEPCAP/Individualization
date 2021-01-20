@@ -19,7 +19,7 @@
 #define DIST_STATE_SERVO_7_OPEN 13
 #define DIST_STATE_SERVO_7_CLOSED 14
 
-#define SERVO_OPEN_TIME 0 // 800 ms
+#define SERVO_OPEN_TIME 1 // 800 ms
 
 uint8_t selected_servo = 0;
 uint8_t distState = DIST_STATE_IDLE;
