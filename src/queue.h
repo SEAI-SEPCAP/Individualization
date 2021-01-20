@@ -41,4 +41,6 @@ uint8_t queuePop(void) {
     }
 }
 
+void queueClear() { elements = 0; }
+
 #endif

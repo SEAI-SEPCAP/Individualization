@@ -83,6 +83,7 @@ void receive_data(void) {
         } else if (msgType == SMS_MSGTYPE__STARTSTOP) {
             if (data == SMS_MSGTYPE__STARTSTOP__START) {
                 operation = true;
+                queueClear();
             } else {
                 operation = false;
             }
