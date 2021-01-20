@@ -24,7 +24,7 @@
 #define MAX_CW 2.0  // Dutry-cycle for MAX CW speed
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
 #define P_FCLK 2000 // (16M/1000)/8
-#define DISC_SPEED 8
+#define DISC_SPEED 15
 
 bool new_capsule = false;
 
@@ -185,9 +185,9 @@ int main(void) {
     while (1) {
         receive_data();
 
-        /*if (timerIsDone(openServoTimer)) {
-            turnOnDebugLED();
-        } else {
+        if (timerIsDone(openServoTimer)) {
+            hold_disc = false;
+        } /*else {
             turnOffDebugLED();
         }*/
 

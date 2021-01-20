@@ -26,136 +26,88 @@ uint8_t distState = DIST_STATE_IDLE;
 bool capsuleCleared = false;
 bool hold_disc = false;
 
+void resetServoPositions() {
+    closeServo(1);
+    closeServo(2);
+    closeServo(3);
+    closeServo(4);
+    closeServo(5);
+    closeServo(6);
+    closeServo(7);
+}
+
 void distStateMachine(uint8_t &selected, bool new_capsule = false) {
 
     switch (distState) {
     case DIST_STATE_IDLE:
         if (!isQueueEmpty() && new_capsule) {
+            setTimer(openServoTimer, SERVO_OPEN_TIME);
             hold_disc = true;
         }
-        if (selected == 1) {
-            distState = DIST_STATE_SERVO_1_CLOSED;
-        } else if (selected == 2) {
-            distState = DIST_STATE_SERVO_2_CLOSED;
-        } else if (selected == 3) {
-            distState = DIST_STATE_SERVO_3_CLOSED;
-        } else if (selected == 4) {
-            distState = DIST_STATE_SERVO_4_CLOSED;
-        } else if (selected == 5) {
-            distState = DIST_STATE_SERVO_5_CLOSED;
-        } else if (selected == 6) {
-            distState = DIST_STATE_SERVO_6_CLOSED;
-        } else if (selected == 7) {
-            distState = DIST_STATE_SERVO_7_CLOSED;
-        } else {
-            distState = DIST_STATE_IDLE;
-        }
-
-        break;
-
-    case DIST_STATE_SERVO_1_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(1);
-            distState = DIST_STATE_IDLE;
-            hold_disc = false;
-            selected = 0;
+        if (new_capsule) {
+            resetServoPositions();
+            if (selected == 1) {
+                distState = DIST_STATE_SERVO_1_CLOSED;
+            } else if (selected == 2) {
+                distState = DIST_STATE_SERVO_2_CLOSED;
+            } else if (selected == 3) {
+                distState = DIST_STATE_SERVO_3_CLOSED;
+            } else if (selected == 4) {
+                distState = DIST_STATE_SERVO_4_CLOSED;
+            } else if (selected == 5) {
+                distState = DIST_STATE_SERVO_5_CLOSED;
+            } else if (selected == 6) {
+                distState = DIST_STATE_SERVO_6_CLOSED;
+            } else if (selected == 7) {
+                distState = DIST_STATE_SERVO_7_CLOSED;
+            } else {
+                distState = DIST_STATE_IDLE;
+            }
         }
         break;
 
-    case DIST_STATE_SERVO_2_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(2);
-            distState = DIST_STATE_IDLE;
-            hold_disc = false;
-            selected = 0;
-        }
-        break;
-
-    case DIST_STATE_SERVO_3_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(3);
-            distState = DIST_STATE_IDLE;
-            hold_disc = false;
-            selected = 0;
-        }
-        break;
-
-    case DIST_STATE_SERVO_4_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(4);
-            distState = DIST_STATE_IDLE;
-            hold_disc = false;
-            selected = 0;
-        }
-        break;
-
-    case DIST_STATE_SERVO_5_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(5);
-            distState = DIST_STATE_IDLE;
-            hold_disc = false;
-            selected = 0;
-        }
-        break;
-
-    case DIST_STATE_SERVO_6_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(6);
-            distState = DIST_STATE_IDLE;
-            hold_disc = false;
-            selected = 0;
-        }
-        break;
-
-    case DIST_STATE_SERVO_7_OPEN:
-        if (timerIsDone(openServoTimer)) {
-            closeServo(7);
-            distState = DIST_STATE_IDLE;
-            hold_disc = false;
-            selected = 0;
-        }
-        break;
+        /*case DIST_STATE_SERVO_1_OPEN:
+            if (timerIsDone(openServoTimer)) {
+                closeServo(1);
+                distState = DIST_STATE_IDLE;
+                hold_disc = false;
+                selected = 0;
+            }
+            break;*/
 
     case DIST_STATE_SERVO_1_CLOSED:
         openServo(1);
-        setTimer(openServoTimer, SERVO_OPEN_TIME);
-        distState = DIST_STATE_SERVO_1_OPEN;
+        distState = DIST_STATE_IDLE;
         break;
 
     case DIST_STATE_SERVO_2_CLOSED:
         openServo(2);
-        setTimer(openServoTimer, SERVO_OPEN_TIME);
-        distState = DIST_STATE_SERVO_2_OPEN;
+        distState = DIST_STATE_IDLE;
         break;
 
     case DIST_STATE_SERVO_3_CLOSED:
         openServo(3);
-        setTimer(openServoTimer, SERVO_OPEN_TIME);
-        distState = DIST_STATE_SERVO_3_OPEN;
+        distState = DIST_STATE_IDLE;
         break;
 
     case DIST_STATE_SERVO_4_CLOSED:
         openServo(4);
-        setTimer(openServoTimer, SERVO_OPEN_TIME);
-        distState = DIST_STATE_SERVO_4_OPEN;
+        distState = DIST_STATE_IDLE;
         break;
 
     case DIST_STATE_SERVO_5_CLOSED:
         openServo(5);
-        setTimer(openServoTimer, SERVO_OPEN_TIME);
-        distState = DIST_STATE_SERVO_5_OPEN;
+        distState = DIST_STATE_IDLE;
         break;
 
     case DIST_STATE_SERVO_6_CLOSED:
         openServo(6);
-        setTimer(openServoTimer, SERVO_OPEN_TIME);
-        distState = DIST_STATE_SERVO_6_OPEN;
+        distState = DIST_STATE_IDLE;
         break;
 
     case DIST_STATE_SERVO_7_CLOSED:
         openServo(7);
-        setTimer(openServoTimer, SERVO_OPEN_TIME);
-        distState = DIST_STATE_SERVO_7_OPEN;
+        distState = DIST_STATE_IDLE;
         break;
     }
 }
@@ -203,14 +155,4 @@ void initDistPins(void) {
     DDRH |= _BV(PINH3); // Digital Pin 6, OC4A, Servo5 - PORT PWM6
     DDRH |= _BV(PINH4); // Digital Pin 7, OC4B, Servo6 - PORT PWM7
     DDRH |= _BV(PINH5); // Digital Pin 8, OC4C, Servo7 - PORT PWM8
-}
-
-void resetServoPositions() {
-    closeServo(1);
-    closeServo(2);
-    closeServo(3);
-    closeServo(4);
-    closeServo(5);
-    closeServo(6);
-    closeServo(7);
 }
