@@ -9,7 +9,7 @@
 #include <util/delay.h>
 
 // Select servo data - Queue
-#define QUEUE_SIZE 10
+#define QUEUE_SIZE 20
 uint8_t queue[QUEUE_SIZE];
 
 uint8_t elements = 0;
