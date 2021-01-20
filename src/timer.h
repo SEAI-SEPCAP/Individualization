@@ -16,6 +16,7 @@ timer timerVars[numberOfTimerVars]; // PWM F=50, therefore we need 500
 
 #define inverterTimer 0
 #define openServoTimer 1
+#define capsuleDetectionDebounceTimer 2
 
 void setTimer(uint8_t index, timer value) { timerVars[index] = value; }
 

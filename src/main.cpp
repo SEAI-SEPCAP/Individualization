@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <stdbool.h>
@@ -207,11 +208,12 @@ int main(void) {
 // Sensor interrupt
 ISR(INT0_vect) {
     setTimer(inverterTimer, Time_Invert); // Reset the timer
-    // TODO
-    if (!isQueueEmpty())
-        queuePop();
+    if (timerIsDone(capsuleDetectionDebounceTimer)) {
+        setTimer(capsuleDetectionDebounceTimer, 5);
+        selected_servo = queuePop();
 
-    sendNewCapsuleDetection();
+        sendNewCapsuleDetection();
+    }
 }
 
 // Emergency interrupt - any edge generates an interrupt
