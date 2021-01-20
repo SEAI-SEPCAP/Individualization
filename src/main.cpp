@@ -19,12 +19,13 @@
 #define EM_BUTTOM_EMERGENCY PIND1 // INT1 - EM Bottom Interrupt - Emergency
 #define EM_BUTTOM_RESUME PIND2    // INT2 - EM Bottom Interrupt - Resume
 
-#define Time_Invert 500
+#define Time_Invert 610
 #define MAX_CCW 1.0 // Duty-cycle for MAX CCW speed
 #define MAX_CW 2.0  // Dutry-cycle for MAX CW speed
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
 #define P_FCLK 2000 // (16M/1000)/8
 #define DISC_SPEED 15
+#define DISC_REVERSE_SPEED 100
 
 bool new_capsule = false;
 
@@ -100,23 +101,23 @@ void indv_control(void) {
             state = 1;                            // Normal Rotation
             setTimer(inverterTimer, Time_Invert); // Reset Timer
         } else {
-            state = 2;                            // Inverted Rotation
-            setTimer(inverterTimer, Time_Invert); // Reset Timer
+            state = 2;                    // Inverted Rotation
+            setTimer(inverterTimer, 200); // Reset Timer
         }
         break;
 
     case 1:
-        /*if (timerIsDone(inverterTimer)) {
+        if (timerIsDone(inverterTimer)) {
             state = 0;
             inv = true; // Set Inverted rotation
-        }*/
+        }
         break;
 
     case 2:
-        /*if (timerIsDone(inverterTimer)) {
+        if (timerIsDone(inverterTimer)) {
             state = 0;
             inv = false; // Set Normal Rotation
-        }*/
+        }
         break;
     }
 
@@ -134,7 +135,7 @@ void indv_control(void) {
         if (hold_disc)
             disc_speed_rot(0);
         else
-            disc_speed_rot(-DISC_SPEED);
+            disc_speed_rot(-DISC_REVERSE_SPEED);
         break;
     }
 }
