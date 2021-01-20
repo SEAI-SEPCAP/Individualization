@@ -19,52 +19,36 @@
 #define DIST_STATE_SERVO_7_OPEN 13
 #define DIST_STATE_SERVO_7_CLOSED 14
 
-#define SERVO_OPEN_TIME 1 // 800 ms
+#define SERVO_OPEN_TIME 35
 
 uint8_t selected_servo = 0;
 uint8_t distState = DIST_STATE_IDLE;
 bool capsuleCleared = false;
 bool hold_disc = false;
 
-void distStateMachine(uint8_t selected, bool new_capsule = false) {
+void distStateMachine(uint8_t &selected, bool new_capsule = false) {
 
     switch (distState) {
     case DIST_STATE_IDLE:
         if (!isQueueEmpty() && new_capsule) {
             hold_disc = true;
         }
-        switch (selected) {
-        case 1:
+        if (selected == 1) {
             distState = DIST_STATE_SERVO_1_CLOSED;
-            break;
-
-        case 2:
+        } else if (selected == 2) {
             distState = DIST_STATE_SERVO_2_CLOSED;
-            break;
-
-        case 3:
+        } else if (selected == 3) {
             distState = DIST_STATE_SERVO_3_CLOSED;
-            break;
-
-        case 4:
+        } else if (selected == 4) {
             distState = DIST_STATE_SERVO_4_CLOSED;
-            break;
-
-        case 5:
+        } else if (selected == 5) {
             distState = DIST_STATE_SERVO_5_CLOSED;
-            break;
-
-        case 6:
+        } else if (selected == 6) {
             distState = DIST_STATE_SERVO_6_CLOSED;
-            break;
-
-        case 7:
+        } else if (selected == 7) {
             distState = DIST_STATE_SERVO_7_CLOSED;
-            break;
-
-        default:
+        } else {
             distState = DIST_STATE_IDLE;
-            break;
         }
 
         break;

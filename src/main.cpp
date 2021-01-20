@@ -24,7 +24,7 @@
 #define MAX_CW 2.0  // Dutry-cycle for MAX CW speed
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
 #define P_FCLK 2000 // (16M/1000)/8
-#define DISC_SPEED 10
+#define DISC_SPEED 8
 
 bool new_capsule = false;
 
@@ -203,7 +203,8 @@ int main(void) {
             }
         } else {
             disc_speed_rot(0);
-            distStateMachine(0);
+            selected_servo = 0;
+            distStateMachine(selected_servo);
             state = 0;
             inv = false;
             resetServoPositions();
