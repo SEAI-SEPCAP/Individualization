@@ -227,12 +227,12 @@ ISR(INT0_vect) {
 // Emergency interrupt - any edge generates an interrupt
 // FE - Emergency is TRUE
 // RE - Emergency is FALSE
-ISR(INT1_vect) {
+/*ISR(INT1_vect) {
     if (timerIsDone(emergencyDebounceTimer)) {
         setTimer(emergencyDebounceTimer, DEBOUNCE_TIME);
         emergency = true;
         operation = false;
-        // sendEmergency_Emergency();
+        sendEmergency_Emergency();
     }
 }
 
@@ -240,6 +240,6 @@ ISR(INT2_vect) {
     if (timerIsDone(emergencyDebounceTimer)) {
         setTimer(emergencyDebounceTimer, DEBOUNCE_TIME);
         emergency = false;
-        // sendEmergency_Resume();
+        sendEmergency_Resume();
     }
-}
+}*/
