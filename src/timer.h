@@ -9,7 +9,7 @@
 
 #include "debug.h"
 
-#define numberOfTimerVars 5
+#define numberOfTimerVars 12
 
 typedef uint16_t timer;
 
@@ -17,12 +17,21 @@ timer timerVars[numberOfTimerVars] = {0}; // PWM F=50, therefore we need 500
                                           // interrupts to complete 10s
 
 #define inverterTimer 0
-#define openServoTimer 1
+#define holdDiscTimer 1
 #define capsuleDetectionDebounceTimer 2
 #define emergencyDebounceTimer 3
+#define servoTimer_1 4
+#define servoTimer_2 5
+#define servoTimer_3 6
+#define servoTimer_4 7
+#define servoTimer_5 8
+#define servoTimer_6 9
+#define servoTimer_7 10
 
 #define DEBOUNCE_TIME 6
 #define Time_Invert 610
+#define HOLD_DISC_TIME 55
+#define OPEN_SERVO_TIME 45
 
 void setTimer(uint8_t index, timer value) { timerVars[index] = value; }
 

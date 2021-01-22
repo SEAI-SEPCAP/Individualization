@@ -186,11 +186,44 @@ int main(void) {
     while (1) {
         receive_data();
 
-        if (timerIsDone(openServoTimer)) {
+        if (timerIsDone(holdDiscTimer)) {
             hold_disc = false;
-        } /*else {
-            turnOffDebugLED();
-        }*/
+        }
+        if (timerIsDone(servoTimer_1)) {
+            closeServo(1);
+        } else {
+            hold_disc = true;
+        }
+        if (timerIsDone(servoTimer_2)) {
+            closeServo(2);
+        } else {
+            hold_disc = true;
+        }
+        if (timerIsDone(servoTimer_3)) {
+            closeServo(3);
+        } else {
+            hold_disc = true;
+        }
+        if (timerIsDone(servoTimer_4)) {
+            closeServo(4);
+        } else {
+            hold_disc = true;
+        }
+        if (timerIsDone(servoTimer_5)) {
+            closeServo(5);
+        } else {
+            hold_disc = true;
+        }
+        if (timerIsDone(servoTimer_6)) {
+            closeServo(6);
+        } else {
+            hold_disc = true;
+        }
+        if (timerIsDone(servoTimer_7)) {
+            closeServo(7);
+        } else {
+            hold_disc = true;
+        }
 
         /* if (emergency) {
              disc_speed_rot(0);   // Stop the disk
