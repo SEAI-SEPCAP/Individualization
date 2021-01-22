@@ -231,7 +231,10 @@ int main(void) {
          } else */
         if (operation) {
             indv_control();
-            distStateMachine(selected_servo, new_capsule);
+            if (!count_mode) {
+                distStateMachine(selected_servo, new_capsule);
+            }
+
             if (new_capsule) {
                 new_capsule = false;
             }

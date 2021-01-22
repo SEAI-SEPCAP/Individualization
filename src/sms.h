@@ -30,6 +30,7 @@
 
 #define SMS_MSGTYPE__STARTSTOP__STOP 0
 #define SMS_MSGTYPE__STARTSTOP__START 1
+#define SMS_MSGTYPE__STARTSTOP__COUNT 2
 
 uint8_t state;
 float dc; // Duty-cycle
@@ -37,6 +38,7 @@ bool inv;
 
 bool emergency = false;
 bool operation = false;
+bool count_mode = false;
 
 uint8_t header;
 uint8_t data;
@@ -85,9 +87,15 @@ void receive_data(void) {
         } else if (msgType == SMS_MSGTYPE__STARTSTOP) {
             if (data == SMS_MSGTYPE__STARTSTOP__START) {
                 operation = true;
+                count_mode = false;
+                queueClear();
+            } else if (data == SMS_MSGTYPE__STARTSTOP__COUNT) {
+                operation = true;
+                count_mode = true;
                 queueClear();
             } else {
                 operation = false;
+                count_mode = false;
             }
         }
         sei();
