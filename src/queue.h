@@ -32,7 +32,7 @@ uint8_t queuePop(void) {
     } else {
         uint8_t ret = queue[0];
 
-        for (uint8_t i = 0; i < elements; i++) {
+        for (uint8_t i = 0; i < elements - 1; i++) {
             queue[i] = queue[i + 1];
         }
 

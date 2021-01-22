@@ -22,6 +22,7 @@ timer timerVars[numberOfTimerVars] = {0}; // PWM F=50, therefore we need 500
 #define emergencyDebounceTimer 3
 
 #define DEBOUNCE_TIME 6
+#define Time_Invert 610
 
 void setTimer(uint8_t index, timer value) { timerVars[index] = value; }
 

@@ -19,7 +19,6 @@
 #define EM_BUTTOM_EMERGENCY PIND1 // INT1 - EM Bottom Interrupt - Emergency
 #define EM_BUTTOM_RESUME PIND2    // INT2 - EM Bottom Interrupt - Resume
 
-#define Time_Invert 610
 #define MAX_CCW 1.0 // Duty-cycle for MAX CCW speed
 #define MAX_CW 2.0  // Dutry-cycle for MAX CW speed
 #define ZERO_W 1.5  // Duty-cycle for STOP Disk
@@ -116,6 +115,7 @@ void indv_control(void) {
     case 2:
         if (timerIsDone(inverterTimer)) {
             state = 0;
+            queueClear();
             inv = false; // Set Normal Rotation
         }
         break;
@@ -230,16 +230,16 @@ ISR(INT0_vect) {
 /*ISR(INT1_vect) {
     if (timerIsDone(emergencyDebounceTimer)) {
         setTimer(emergencyDebounceTimer, DEBOUNCE_TIME);
-        emergency = true;
-        operation = false;
+        // emergency = true;
+        // operation = false;
         sendEmergency_Emergency();
     }
 }
 
 ISR(INT2_vect) {
     if (timerIsDone(emergencyDebounceTimer)) {
-        setTimer(emergencyDebounceTimer, DEBOUNCE_TIME);
-        emergency = false;
+        // setTimer(emergencyDebounceTimer, DEBOUNCE_TIME);
+        // emergency = false;
         sendEmergency_Resume();
     }
 }*/

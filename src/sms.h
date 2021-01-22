@@ -75,11 +75,13 @@ void receive_data(void) {
             ; // Waits until has new data to be read
         data = UDR0;
 
+        cli();
         if (!isMsgAddressedAtUs(msgAddr))
             return;
 
         if (msgType == SMS_MSGTYPE__NEWCAPSULE) {
             queuePush(data); // Saves the morot code in the queue
+            setTimer(inverterTimer, Time_Invert);
         } else if (msgType == SMS_MSGTYPE__STARTSTOP) {
             if (data == SMS_MSGTYPE__STARTSTOP__START) {
                 operation = true;
@@ -88,6 +90,7 @@ void receive_data(void) {
                 operation = false;
             }
         }
+        sei();
     } else {
         return;
     }
