@@ -231,9 +231,7 @@ int main(void) {
          } else */
         if (operation) {
             indv_control();
-            if (!count_mode) {
-                distStateMachine(selected_servo, new_capsule);
-            }
+            distStateMachine(selected_servo, new_capsule);
 
             if (new_capsule) {
                 new_capsule = false;
@@ -255,7 +253,9 @@ ISR(INT0_vect) {
     if (timerIsDone(capsuleDetectionDebounceTimer)) {
         setTimer(capsuleDetectionDebounceTimer, DEBOUNCE_TIME);
         selected_servo = queuePop();
-        new_capsule = true;
+        if (!count_mode) {
+            new_capsule = true;
+        }
         sendNewCapsuleDetection();
     }
 }

@@ -95,7 +95,6 @@ void receive_data(void) {
                 queueClear();
             } else {
                 operation = false;
-                count_mode = false;
             }
         }
         sei();
